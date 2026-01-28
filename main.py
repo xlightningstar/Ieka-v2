@@ -30,7 +30,7 @@ async def on_message(message):
     if not message.content.startswith("!"):
         return
 
-    prompt = message.content[len("!"):].strip()
+    prompt = f"User {message.author.name}: {message.content[len('!'):].strip()}"
 
     if request_queue.full():
         await message.reply("please dont spam ;-;")
@@ -45,6 +45,7 @@ async def queue_worker():
 
         async with processing_lock:
             try:
+                #print(prompt)
                 response = await asyncio.to_thread(
                     llm.get_response, prompt
                 )

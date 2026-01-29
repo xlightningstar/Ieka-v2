@@ -1,0 +1,110 @@
+import discord
+import asyncio
+from llm_client import LLMClient
+from settings import BOT_API_KEY
+from config import Config
+from conversation_history import ConversationHistory
+
+class DiscordBot:
+    """Main Discord bot class."""
+    
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        
+        self.client = discord.Client(intents=intents)
+        self.llm = LLMClient()
+        self.history = ConversationHistory()
+        
+        self.request_queue = asyncio.Queue(maxsize=Config.QUEUE_MAX_SIZE)
+        self.processing_lock = asyncio.Lock()
+        
+        self._register_events()
+    
+    def _register_events(self):
+        """Register Discord event handlers."""
+        self.client.event(self.on_ready)
+        self.client.event(self.on_message)
+    
+    async def on_ready(self):
+        """Called when the bot is ready."""
+        print(f"Logged in as {self.client.user}")
+        asyncio.create_task(self.queue_worker())
+    
+    async def on_message(self, message: discord.Message):
+        """Handle incoming messages."""
+        # Ignore bot messages
+        if message.author.bot:
+            return
+        
+        # Check if message starts with command prefix
+        if not message.content.startswith("!"):
+            return
+        
+        command_content = message.content[1:].strip()
+        
+        # Handle special commands
+        if command_content.lower() == "clear":
+            self.history.clear_history(message.channel.id)
+            await message.reply("🗑️ Conversation history cleared!")
+            return
+        
+        # Add user message to history
+        self.history.add_message(
+            message.channel.id,
+            message.author.name,
+            command_content
+        )
+        
+        # Check if queue is full
+        if self.request_queue.full():
+            await message.reply("please dont spam ;-;")
+            return
+        
+        # Add request to queue
+        await self.request_queue.put((message, command_content))
+    
+    async def queue_worker(self):
+        """Process messages from the queue."""
+        while True:
+            message, user_prompt = await self.request_queue.get()
+            
+            async with self.processing_lock:
+                try:
+                    # Get conversation history
+                    history = self.history.get_history(message.channel.id)
+                    
+                    # Generate response
+                    response = await asyncio.to_thread(
+                        self.llm.get_response,
+                        user_prompt,
+                        history
+                    )
+                    
+                    # Add bot response to history
+                    self.history.add_message(
+                        message.channel.id,
+                        self.client.user.name,
+                        response,
+                        is_bot=True
+                    )
+                    
+                    # Send response (respecting Discord's 2000 char limit)
+                    await message.reply(response[:2000])
+                
+                except Exception as e:
+                    await message.reply("❌ Something went wrong.")
+                    print(f"Error processing message: {e}")
+                
+                finally:
+                    await asyncio.sleep(Config.COOLDOWN_SECONDS)
+                    self.request_queue.task_done()
+    
+    def run(self):
+        """Start the bot."""
+        self.client.run(BOT_API_KEY)
+
+
+if __name__ == "__main__":
+    bot = DiscordBot()
+    bot.run()

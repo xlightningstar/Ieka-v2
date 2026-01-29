@@ -71,10 +71,8 @@ class LLMClient:
             "messages": messages
         }
         
-        #response = requests.post(Config.API_URL, headers=self.headers, json=payload)
-        #response.raise_for_status()
+        response = requests.post(Config.API_URL, headers=self.headers, json=payload)
+        response.raise_for_status()
         
-        #data = response.json()
-        #return data["choices"][0]["message"]["content"]
-        print(messages)
-        return "This is a mock response."
+        data = response.json()
+        return data["choices"][0]["message"]["content"]

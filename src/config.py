@@ -1,3 +1,5 @@
+
+
 class Config:
     """Bot configuration constants."""
     QUEUE_MAX_SIZE = 1

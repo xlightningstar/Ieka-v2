@@ -1,6 +1,6 @@
 import requests
-from settings import LLM_API_KEY
-from config import Config
+from src.settings import LLM_API_KEY
+from src.config import Config
 
 class LLMClient:
     """Client for interacting with the LLM API."""
@@ -78,8 +78,10 @@ class LLMClient:
             "messages": messages
         }
         
-        response = requests.post(Config.API_URL, headers=self.headers, json=payload)
-        response.raise_for_status()
+        #response = requests.post(Config.API_URL, headers=self.headers, json=payload)
+        #response.raise_for_status()
         
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
+        #data = response.json()
+        #return data["choices"][0]["message"]["content"]
+        print(messages)
+        return "This is a mock response."

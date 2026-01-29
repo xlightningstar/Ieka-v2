@@ -1,5 +1,5 @@
 from collections import deque
-from config import Config
+from src.config import Config
 
 
 class ConversationHistory:

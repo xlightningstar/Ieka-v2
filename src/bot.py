@@ -1,9 +1,9 @@
 import discord
 import asyncio
-from llm_client import LLMClient
-from settings import BOT_API_KEY
-from config import Config
-from conversation_history import ConversationHistory
+from src.llm_client import LLMClient
+from src.settings import BOT_API_KEY
+from src.config import Config
+from src.conversation_history import ConversationHistory
 
 class DiscordBot:
     """Main Discord bot class."""
@@ -103,8 +103,3 @@ class DiscordBot:
     def run(self):
         """Start the bot."""
         self.client.run(BOT_API_KEY)
-
-
-if __name__ == "__main__":
-    bot = DiscordBot()
-    bot.run()

@@ -77,7 +77,6 @@ class DiscordBot:
                     # Generate response
                     response = await asyncio.to_thread(
                         self.llm.get_response,
-                        user_prompt,
                         history
                     )
                     

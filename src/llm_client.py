@@ -21,11 +21,10 @@ class LLMClient:
             print(f"Warning: {filepath} not found. Using empty system context.")
             return ""
     
-    def _build_messages(self, current_prompt: str, history: list = None) -> list:
+    def _build_messages(self, history: list = None) -> list:
         """Build the message array for the API request.
         
         Args:
-            current_prompt: The current user prompt
             history: List of previous messages in format [{"role": str, "author": str, "content": str}, ...]
         
         Returns:
@@ -42,7 +41,7 @@ class LLMClient:
         
         # Add conversation history if available
         if history:
-            for msg in history[:-1]:  # Exclude the current message (last in history)
+            for msg in history:
                 # Format message with author name for context
                 content = f"{msg['author']}: {msg['content']}" if msg['role'] == 'user' else msg['content']
                 messages.append({
@@ -50,15 +49,9 @@ class LLMClient:
                     "content": content
                 })
         
-        # Add current prompt
-        messages.append({
-            "role": "user",
-            "content": current_prompt
-        })
-        
         return messages
     
-    def get_response(self, prompt: str, history: list = None) -> str:
+    def get_response(self, history: list = None) -> str:
         """Get a response from the LLM.
         
         Args:
@@ -71,7 +64,7 @@ class LLMClient:
         Raises:
             requests.HTTPError: If the API request fails
         """
-        messages = self._build_messages(prompt, history)
+        messages = self._build_messages(history)
         
         payload = {
             "model": Config.MODEL,

@@ -99,6 +99,10 @@ class DiscordBot:
                         self.llm.get_response,
                         updated_history
                     )
+
+                    #remove ieka: from the start of the response if it exists
+                    if response.lower().startswith("ieka:"):
+                        response = response[5:].strip()
                     
                     # Add bot response to history
                     self.history.add_message(
@@ -109,6 +113,7 @@ class DiscordBot:
                     )
                     
                     print(f"history: {self.history.get_history(message.channel.id)}")
+                    
                     # Send response (respecting Discord's 2000 char limit)
                     await message.reply(response[:2000])
                 
@@ -125,4 +130,5 @@ class DiscordBot:
     
     def run(self):
         """Start the bot."""
+        assert BOT_API_KEY is not None
         self.client.run(BOT_API_KEY)

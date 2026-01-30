@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,venv
 
 context.txt
+profile_maker/data
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

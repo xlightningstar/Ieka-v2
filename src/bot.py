@@ -108,9 +108,11 @@ class DiscordBot:
                         is_bot=True
                     )
                     
+                    print(f"history: {self.history.get_history(message.channel.id)}")
                     # Send response (respecting Discord's 2000 char limit)
                     await message.reply(response[:2000])
                 
+                    
                 except Exception as e:
                     await message.reply("❌ Something went wrong.")
                     print(f"Error processing message: {e}")

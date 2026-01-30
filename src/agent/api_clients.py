@@ -1,12 +1,62 @@
 import requests
 from typing import Dict, List, Optional
 from datetime import datetime
+from urllib.parse import quote
 
 
 class TfLClient:
     """Transport for London API client."""
     
     BASE_URL = "https://api.tfl.gov.uk"
+
+    @staticmethod
+    def resolve_location(query: str) -> str | None:
+        """
+        Resolve free-text location into something JourneyResults understands.
+        Returns:
+        - StopPoint ID   (e.g. 940GZZLUKSX)
+        - OR lat,lon     (e.g. 51.5074,-0.1278)
+        - OR None
+        """
+        url = f"{TfLClient.BASE_URL}/StopPoint/Search/{query}"
+
+        r = requests.get(url, timeout=10)
+        if r.status_code != 200:
+            return None
+
+        data = r.json()
+        matches = data.get("matches", [])
+        if not matches:
+            return None
+
+        place = matches[0]
+        print(f"Resolved '{query}' to place: {place.get('name')}")
+
+        # Prefer StopPoint IDs if present
+        if place.get("id", "").startswith("StopPoint"):
+            return place["id"]
+
+        # Fallback to coordinates
+        lat = place.get("lat")
+        lon = place.get("lon")
+        if lat is not None and lon is not None:
+            return f"{lat},{lon}"
+
+        return None
+    
+    @staticmethod
+    def _format_journey(journey: dict) -> str:
+        lines = []
+        lines.append(f"Journey duration: {journey.get('duration', '?')} minutes\n")
+
+        for i, leg in enumerate(journey.get("legs", []), 1):
+            mode = leg.get("mode", {}).get("name", "Unknown")
+            instruction = leg.get("instruction", {}).get("summary", "No instruction")
+            duration = leg.get("duration", "?")
+
+            lines.append(f"{i}. {instruction} ({mode}, {duration} min)")
+
+        return "\n".join(lines)
     
     @staticmethod
     def get_line_status(line: Optional[str] = None) -> str:
@@ -59,32 +109,21 @@ class TfLClient:
             Journey plan information
         """
         try:
-            url = f"{TfLClient.BASE_URL}/Journey/JourneyResults/{from_location}/to/{to_location}"
-            
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            
-            journeys = data.get('journeys', [])
-            
-            if not journeys:
-                return "No journey found"
-            
-            # Get the first journey option
-            journey = journeys[0]
-            duration = journey.get('duration', 0)
-            
-            results = [f"Journey Duration: {duration} minutes\n"]
-            
-            legs = journey.get('legs', [])
-            for i, leg in enumerate(legs, 1):
-                mode = leg.get('mode', {}).get('name', 'Unknown')
-                instruction = leg.get('instruction', {}).get('summary', '')
-                duration_leg = leg.get('duration', 0)
-                
-                results.append(f"Step {i}: {instruction} ({mode}, {duration_leg} min)")
-            
-            return "\n".join(results)
+            from_id = TfLClient.resolve_location(from_location)
+            to_id   = TfLClient.resolve_location(to_location)
+
+            if not from_id or not to_id:
+                raise ValueError("Could not resolve locations")
+
+            url = f"{TfLClient.BASE_URL}/Journey/JourneyResults/{from_id}/to/{to_id}"
+
+            r = requests.get(url, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+
+            journey = data["journeys"][0]
+
+            return TfLClient._format_journey(journey)
             
         except Exception as e:
             return f"Journey planning failed: {str(e)}"
@@ -159,6 +198,13 @@ class YahooFinanceClient:
         Returns:
             Stock price information
         """
+        HEADERS = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept": "application/json",
+            "Accept-Language": "en-GB,en;q=0.9",
+            "Referer": "https://finance.yahoo.com/",
+        }
+        
         try:
             # Using Yahoo Finance query API
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
@@ -167,7 +213,7 @@ class YahooFinanceClient:
                 "range": "1d"
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, headers=HEADERS, timeout=10)
             response.raise_for_status()
             data = response.json()
             

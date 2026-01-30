@@ -65,6 +65,8 @@ class DiscordBot:
         
         # Add request to queue
         await self.request_queue.put((message, command_content))
+
+    
     
     async def queue_worker(self):
         """Process messages from the queue."""
@@ -100,9 +102,7 @@ class DiscordBot:
                         updated_history
                     )
 
-                    #remove ieka: from the start of the response if it exists
-                    if response.lower().startswith("ieka:"):
-                        response = response[5:].strip()
+                    print(f"Chatbot response: {response}")
                     
                     # Add bot response to history
                     self.history.add_message(
@@ -114,9 +114,18 @@ class DiscordBot:
                     
                     print(f"history: {self.history.get_history(message.channel.id)}")
                     
-                    # Send response (respecting Discord's 2000 char limit)
-                    await message.reply(response[:2000])
-                
+                    # Step 5: Send response in chunks if > 2000 characters
+                    if response and response.strip():  # only send if non-empty
+                        max_len = 2000
+                        for i in range(0, len(response), max_len):
+                            chunk = response[i:i + max_len]
+                            await message.reply(chunk)
+                    else:
+                        # fallback if the LLM returned empty
+                        fallback_msg = "THE AI RETURNED AN EMPTY STRING. I WISH I KNEW WHY. 😭"
+                        await message.reply(fallback_msg)
+                        print("Warning: attempted to send empty message")
+                                    
                     
                 except Exception as e:
                     await message.reply("❌ Something went wrong.")

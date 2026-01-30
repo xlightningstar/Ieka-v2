@@ -51,6 +51,13 @@ class ChatbotClient:
         
         return messages
     
+    def clean_response(self, s: str, prefix: str) -> str:
+        s = s.lstrip("\n\r")
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+            s = s.lstrip("\n\r")
+        return s
+    
     def get_response(self, history: list = None) -> str:
         """Get a response from the LLM.
         
@@ -74,4 +81,8 @@ class ChatbotClient:
         response.raise_for_status()
         
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        print(data["choices"][0])
+        #print(data["choices"][0]["message"]["content"])
+        response = data["choices"][0]["message"]["content"]
+        print(response)
+        return self.clean_response(response, "ieka:")

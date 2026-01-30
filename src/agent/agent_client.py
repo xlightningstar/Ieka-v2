@@ -72,7 +72,7 @@ class AgentClient:
         data = response.json()
         return data["choices"][0]["message"]["content"]
     
-    def process_request(self, user_message: str, history: List[Dict] = None) -> Dict:
+    async def process_request(self, user_message: str, history: List[Dict] = None) -> Dict:
         """Process a user request and execute any necessary tools.
         
         Args:
@@ -113,7 +113,7 @@ class AgentClient:
             tool_name = tool_request["tool"]
             tool_args = tool_request["args"]
             
-            result = self.tool_executor.execute_tool(tool_name, **tool_args)
+            result = await self.tool_executor.execute_tool(tool_name, **tool_args)
             
             # Store result in memory
             self.memory[tool_name] = {

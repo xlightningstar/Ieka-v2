@@ -77,11 +77,7 @@ class DiscordBot:
                     history = self.history.get_history(message.channel.id)
                     
                     # Step 1: Agent decides and executes tools
-                    await asyncio.to_thread(
-                        self.agent.process_request,
-                        user_prompt,
-                        history
-                    )
+                    await self.agent.process_request(user_prompt, history)
                     
                     # Step 2: Add tool results to history if any tools were used
                     tool_summary = self.agent.get_memory_summary()
@@ -95,7 +91,6 @@ class DiscordBot:
                         )
                     print(tool_summary)
                     
-                    """
                     # Step 3: Get updated history with tool results
                     updated_history = self.history.get_history(message.channel.id)
                     
@@ -115,7 +110,6 @@ class DiscordBot:
                     
                     # Send response (respecting Discord's 2000 char limit)
                     await message.reply(response[:2000])
-                    """
                 
                 except Exception as e:
                     await message.reply("❌ Something went wrong.")

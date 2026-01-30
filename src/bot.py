@@ -1,6 +1,7 @@
 import discord
 import asyncio
-from src.llm_client import LLMClient
+from src.chatbot import ChatbotClient
+from src.agent import AgentClient
 from src.settings import BOT_API_KEY
 from src.config import Config
 from src.conversation_history import ConversationHistory
@@ -13,7 +14,8 @@ class DiscordBot:
         intents.message_content = True
         
         self.client = discord.Client(intents=intents)
-        self.llm = LLMClient()
+        self.llm = ChatbotClient()
+        self.agent = AgentClient()
         self.history = ConversationHistory()
         
         self.request_queue = asyncio.Queue(maxsize=Config.QUEUE_MAX_SIZE)
@@ -74,10 +76,33 @@ class DiscordBot:
                     # Get conversation history
                     history = self.history.get_history(message.channel.id)
                     
-                    # Generate response
+                    # Step 1: Agent decides and executes tools
+                    await asyncio.to_thread(
+                        self.agent.process_request,
+                        user_prompt,
+                        history
+                    )
+                    
+                    # Step 2: Add tool results to history if any tools were used
+                    tool_summary = self.agent.get_memory_summary()
+                    if tool_summary:
+                        # Add tool results as a system message for context
+                        self.history.add_message(
+                            message.channel.id,
+                            "System",
+                            f"[Tool Results]\n{tool_summary}",
+                            is_bot=True
+                        )
+                    print(tool_summary)
+                    
+                    """
+                    # Step 3: Get updated history with tool results
+                    updated_history = self.history.get_history(message.channel.id)
+                    
+                    # Step 4: Generate final response using main LLM
                     response = await asyncio.to_thread(
                         self.llm.get_response,
-                        history
+                        updated_history
                     )
                     
                     # Add bot response to history
@@ -90,10 +115,13 @@ class DiscordBot:
                     
                     # Send response (respecting Discord's 2000 char limit)
                     await message.reply(response[:2000])
+                    """
                 
                 except Exception as e:
                     await message.reply("❌ Something went wrong.")
                     print(f"Error processing message: {e}")
+                    import traceback
+                    traceback.print_exc()
                 
                 finally:
                     await asyncio.sleep(Config.COOLDOWN_SECONDS)

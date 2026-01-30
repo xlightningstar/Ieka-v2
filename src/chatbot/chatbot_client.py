@@ -2,7 +2,7 @@ import requests
 from src.settings import LLM_API_KEY
 from src.config import Config
 
-class LLMClient:
+class ChatbotClient:
     """Client for interacting with the LLM API."""
     
     def __init__(self):
@@ -12,7 +12,7 @@ class LLMClient:
         }
         self.system_context = self._load_system_context()
     
-    def _load_system_context(self, filepath: str = Config.CONTEXT_FILE_PATH) -> str:
+    def _load_system_context(self, filepath: str = Config.CHATBOT_CONTEXT_FILEPATH) -> str:
         """Load system context from file."""
         try:
             with open(filepath, "r", encoding="utf-8") as f:
@@ -43,7 +43,7 @@ class LLMClient:
         if history:
             for msg in history:
                 # Format message with author name for context
-                content = f"{msg['author']}: {msg['content']}" if msg['role'] == 'user' else msg['content']
+                content = f"{msg['author']}: {msg['content']}"
                 messages.append({
                     "role": msg["role"],
                     "content": content
@@ -55,7 +55,6 @@ class LLMClient:
         """Get a response from the LLM.
         
         Args:
-            prompt: The user's prompt
             history: Optional conversation history
         
         Returns:

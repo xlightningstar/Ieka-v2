@@ -1,0 +1,23 @@
+You have access to the following tools:
+
+1. search(query: str) - Search the web for information
+Example: search("latest AI news")
+
+2. calculate(expression: str) - Perform mathematical calculations
+Example: calculate("25 * 4 + 10")
+
+To use a tool, respond with a JSON object in this exact format:
+{
+    "tool": "tool_name",
+    "args": {
+        "param_name": "value"
+    }
+}
+
+If no tools are needed, respond with:
+{
+    "tool": "none",
+    "args": {}
+}
+
+Only respond with the JSON object, nothing else.

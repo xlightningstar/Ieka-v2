@@ -14,4 +14,5 @@ class Config:
     MODEL = "google/gemini-2.0-flash-lite-001"
     
     # Context file path
-    CONTEXT_FILE_PATH = "context.txt"
+    CHATBOT_CONTEXT_FILEPATH = "src/context_files/chatbot_context.txt"
+    AGENT_TOOLS_CONTEXT_FILEPATH = "src/context_files/agent_tools_context.txt"

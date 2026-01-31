@@ -3,5 +3,5 @@ class Config:
     
     # LLM settings
     API_URL = "https://openrouter.ai/api/v1/chat/completions"
-    MODEL = "deepseek/deepseek-v3.2"
+    MODEL = "google/gemini-2.0-flash-lite-001"
     USERNAME = "subhanafz"

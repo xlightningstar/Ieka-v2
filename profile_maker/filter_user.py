@@ -29,6 +29,8 @@ def filter_by_user():
                     continue
                 if "{Stickers}" in message or "{Reactions}" in message:
                     continue
+                if "..." in message:  # <-- skip messages containing "..."
+                    continue
 
                 outfile.write(line + "\n")
 

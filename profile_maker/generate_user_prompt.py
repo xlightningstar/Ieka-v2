@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 import requests
-from .src.settings import LLM_API_KEY
-from .src.config import Config
+from config import Config
+from settings import LLM_API_KEY
 
 CHAT_FILE = "profile_maker/data/chat_user.txt"
 OUTPUT_FILE = "profile_maker/data/user_style_prompt.txt"
-CHUNK_SIZE = 200
+CHUNK_SIZE = 500
 
 class UserStyleAnalyzer:
     """Analyze a user's messages and generate a style description."""
@@ -19,7 +19,7 @@ class UserStyleAnalyzer:
         self.system_context = self._load_system_context()
         self.style_prompt = ""  # progressively updated
 
-    def _load_system_context(self, filepath: str = Config.CHATBOT_CONTEXT_FILEPATH) -> str:
+    def _load_system_context(self, filepath: str = "profile_maker/context.txt") -> str:
         """Optional system context to include in LLM calls."""
         try:
             with open(filepath, "r", encoding="utf-8") as f:
@@ -29,15 +29,7 @@ class UserStyleAnalyzer:
             return ""
 
     def _build_messages(self, new_messages: list) -> list:
-        """
-        Build the message array for the API request.
-
-        Args:
-            new_messages: List of user messages to feed in this chunk
-
-        Returns:
-            List of messages formatted for the API
-        """
+        """Build the message array for the API request."""
         messages = []
 
         # Include system context if any
@@ -64,6 +56,9 @@ class UserStyleAnalyzer:
 
     def update_style(self, new_messages: list):
         """Send new messages to LLM and update style_prompt."""
+        if not new_messages:
+            return self.style_prompt  # nothing to do
+
         messages = self._build_messages(new_messages)
         payload = {
             "model": Config.MODEL,
@@ -75,6 +70,7 @@ class UserStyleAnalyzer:
 
         data = response.json()
         updated_style = data["choices"][0]["message"]["content"]
+        print(f"updated style: {updated_style}")
         self.style_prompt = self.clean_response(updated_style)
         return self.style_prompt
 
@@ -110,15 +106,18 @@ def main():
     messages = analyzer.read_user_messages(CHAT_FILE)
     chunks = analyzer.chunk_messages(messages, CHUNK_SIZE)
 
+    style_description = ""  # initialize in case chunks is empty
     for i, chunk in enumerate(chunks):
         print(f"Processing chunk {i+1}/{len(chunks)} ({len(chunk)} messages)...")
         style_description = analyzer.update_style(chunk)
 
-    # save final style description
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(style_description)
-
-    print(f"Finished! Style description saved to: {OUTPUT_FILE}")
+    print(f"style description: {style_description}")
+    if style_description:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(style_description)
+        print(f"Finished! Style description saved to: {OUTPUT_FILE}")
+    else:
+        print("No style description generated (maybe no messages?)")
 
 
 if __name__ == "__main__":

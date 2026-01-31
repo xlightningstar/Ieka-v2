@@ -1,7 +1,9 @@
-INPUT_FILE = "src/profile_maker/data/chat_clean.txt"
-OUTPUT_FILE = "src/profile_maker/data/chat_user.txt"
+from config import Config
 
-TARGET_USER = "name"
+INPUT_FILE = "profile_maker/data/chat_clean.txt"
+OUTPUT_FILE = "profile_maker/data/chat_user.txt"
+
+TARGET_USER = Config.USERNAME
 
 def filter_by_user():
     with open(INPUT_FILE, "r", encoding="utf-8") as infile, \

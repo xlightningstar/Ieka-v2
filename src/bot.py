@@ -79,9 +79,10 @@ class DiscordBot:
                     history = self.history.get_history(message.channel.id)
                     
                     # Step 1: Agent decides and executes tools
-                    await self.agent.process_request(user_prompt, history)
+                    # await self.agent.process_request(user_prompt, history)
                     
                     # Step 2: Add tool results to history if any tools were used
+                    """
                     tool_summary = self.agent.get_memory_summary()
                     if tool_summary:
                         # Add tool results as a system message for context
@@ -92,14 +93,15 @@ class DiscordBot:
                             is_bot=True
                         )
                     print(tool_summary)
+                    """
                     
                     # Step 3: Get updated history with tool results
-                    updated_history = self.history.get_history(message.channel.id)
+                    #updated_history = self.history.get_history(message.channel.id)
                     
                     # Step 4: Generate final response using main LLM
                     response = await asyncio.to_thread(
                         self.llm.get_response,
-                        updated_history
+                        history
                     )
 
                     print(f"Chatbot response: {response}")

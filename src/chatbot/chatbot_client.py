@@ -1,4 +1,5 @@
 import requests
+import re
 from src.settings import LLM_API_KEY
 from src.config import Config
 
@@ -56,6 +57,7 @@ class ChatbotClient:
         if s.startswith(prefix):
             s = s[len(prefix):]
             s = s.lstrip("\n\r")
+        s = re.sub(r'\n+', '\n', s)
         return s
     
     def get_response(self, history: list = None) -> str:

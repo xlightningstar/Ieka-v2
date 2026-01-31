@@ -3,6 +3,7 @@
 
 context.txt
 profile_maker/data
+src/context_files
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
